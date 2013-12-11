@@ -5262,13 +5262,17 @@ public class MediaProvider extends ContentProvider {
                 if (Environment.isExternalStorageRemovable()) {
                     final StorageVolume actualVolume = mStorageManager.getPrimaryVolume();
                     String path = mExternalStoragePaths[0];
-                    int volumeId = actualVolume.getFatVolumeId();
 
-                    // In case of a non-FAT filesystem, try to get the UUID
+                    // For Kitkat we know this will fail but check anyway.
+                    int volumeId = FileUtils.getFatVolumeId(path);
+                    //if (LOCAL_LOGV)
+                        Log.d(TAG, path + " volume ID: " + volumeID);
+
                     if (volumeId == -1) {
-                        volumeId = FileUtils.getVolumeUUID(path);
-                        // if (LOCAL_LOGV) Log.v(TAG, path + " UUID: " + volumeID);
-                        Log.e(TAG, path + " UUID: " + volumeId);
+                        // HACK: build the real mount point (NOTE: /mnt/media_rw must be 770)
+                        String realPath = "/mnt/media_rw/" + path.substring(path.lastIndexOf('/')+1);
+                        volumeId = FileUtils.getFatVolumeId(realPath);
+                        Log.d(TAG, realPath + " volume ID: " + volumeID);
                     }
 
                     // Must check for failure!
